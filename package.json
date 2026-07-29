@@ -11,7 +11,8 @@
     "spike": "python scripts/spike_usage.py"
   },
   "dependencies": {
-    "@tauri-apps/api": "^2"
+    "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-autostart": "^2.5.1"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",

@@ -18,6 +18,8 @@ npm install
 npm run tauri dev
 ```
 
+위젯 안에서 우클릭하면 `시작프로그램`, `새로고침`, `종료` 메뉴가 나타난다.
+
 ## 주의
 
 - 인증은 로컬 `%APPDATA%\Cursor\User\globalStorage\state.vscdb`의 `cursorAuth/accessToken`을 읽는다.
