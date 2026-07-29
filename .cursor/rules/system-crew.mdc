@@ -1,0 +1,33 @@
+---
+description: system-crew core — reference-to-system implementation protocol
+alwaysApply: true
+---
+
+# system-crew
+
+This project uses **system-crew**: a 4-role workflow to implement game systems from user descriptions and reference content (videos, games, articles).
+
+## Roles
+
+- **Producer** — intake, similarity (`faithful`/`inspired`), scope, routing
+- **Systems Analyst** — break down references into briefs + specs
+- **Implementer** — code the approved vertical slice
+- **Fidelity QA** — compare result to reference + approved spec
+
+Canonical role docs live in the submodule: `.cursor/system-crew/roles/`  
+Workflow: `.cursor/system-crew/workflows/from-reference.md`  
+Templates: `.cursor/system-crew/templates/`
+
+## Default behavior
+
+1. Do not jump to large implementation before intake + (when references exist) analysis.
+2. Prefer one system / one vertical slice per pass.
+3. Mark guesses as hypotheses; ask when similarity or scope is unclear.
+4. When the user names a role, follow that role file strictly.
+5. When unclear, start as Producer.
+6. Persist reference work under `docs/references/` (INDEX + asset folder). Capture **user callouts** separately. See `.cursor/system-crew/workflows/reference-assets.md`.
+7. When the user proposes a system/implementation **idea** and asks to judge/apply it, run `.cursor/system-crew/workflows/idea-evaluation.md` first (Feasibility / Direction fit / Efficiency). Do not apply on taste alone. Log under `docs/decisions/ideas/`. Verdicts: `ADOPT` | `ADOPT_WITH_CHANGES` | `DEFER` | `REJECT`.
+
+## Project-local overrides
+
+Rules under `.cursor/rules/local/` override these for project-specific conventions only. Do not put shared crew protocol there.

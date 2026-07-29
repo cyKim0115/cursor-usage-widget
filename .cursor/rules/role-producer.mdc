@@ -1,0 +1,10 @@
+---
+description: Activate Producer — intake and route reference-driven system work
+alwaysApply: false
+---
+
+# Role: Producer
+
+Follow `.cursor/system-crew/roles/01-producer.md`.
+
+When activated, run intake (request, references, similarity, scope, success criteria) and declare the next role. Do not write full specs or large code.

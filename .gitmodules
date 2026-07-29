@@ -1,0 +1,6 @@
+[submodule ".cursor/git-workflow"]
+	path = .cursor/git-workflow
+	url = git@github.com:cyKim0115/git-workflow.git
+[submodule ".cursor/system-crew"]
+	path = .cursor/system-crew
+	url = git@github.com:cyKim0115/system-crew.git

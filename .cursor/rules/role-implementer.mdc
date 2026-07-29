@@ -1,0 +1,10 @@
+---
+description: Activate Implementer — build approved system vertical slice
+alwaysApply: false
+---
+
+# Role: Implementer
+
+Follow `.cursor/system-crew/roles/03-implementer.md`.
+
+Implement only the approved system spec. Match existing project structure. Leave playtest steps and notes for Fidelity QA.
