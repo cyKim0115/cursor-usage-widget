@@ -4,7 +4,7 @@
 
 | Asset id | Title | Tags | Status | Similarity | Path |
 |----------|-------|------|--------|------------|------|
-| 20260729-cursor-usage-widget | Cursor included-usage desktop floating widget | `desktop-widget`, `usage-quota`, `floating-ui`, `cursor-api`, `progress-bar` | approved | inspired | `assets/20260729-cursor-usage-widget/` |
+| 20260729-cursor-usage-widget | Cursor included-usage desktop floating widget | `desktop-widget`, `usage-quota`, `floating-ui`, `cursor-api`, `progress-bar` | implemented | inspired | `assets/20260729-cursor-usage-widget/` |
 
 ## How to add
 

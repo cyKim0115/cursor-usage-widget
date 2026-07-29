@@ -3,11 +3,11 @@
 - Asset id: `20260729-cursor-usage-widget`
 - Title: Cursor included-usage desktop floating widget
 - Date: 2026-07-29
-- Status: `approved`
+- Status: `implemented`
 - Similarity: `inspired`
 - Tags: `desktop-widget`, `usage-quota`, `floating-ui`, `cursor-api`, `windows`, `progress-bar`
 - Related systems / features: dual-track included usage (Cursor vs Other), local session token, floating panel
-- Project notes path: `HANDOFF.md`, `docs/references/assets/20260729-cursor-usage-widget/system-spec.md`
+- Project notes path: `HANDOFF.md`, `docs/references/assets/20260729-cursor-usage-widget/system-spec.md`, `scripts/spike_usage.py`, `src-tauri/`
 
 ## Sources
 
@@ -77,8 +77,9 @@
 
 - `reference-brief.md`: 동 폴더
 - `system-spec.md`: 동 폴더 (approved)
+- `phase0-spike.md`: 동 폴더 (PASS)
 - `fidelity-report.md`: (없음)
-- Implementation: 미착수 — Phase 0 ready
+- Implementation: `scripts/spike_usage.py`, `src-tauri/`, `src/`
 
 ## Reuse hints
 

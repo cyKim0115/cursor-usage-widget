@@ -99,11 +99,12 @@ Windows 바탕화면 위에 Steam **Mini Cozy Room**처럼 떠 있는 작은 위
 
 ---
 
-## 7. 명시적으로 하지 않은 것 (이 대화 기준)
+## 7. 구현 상태 (갱신)
 
-- 코드·의존성·앱 스캐폴딩: **없음**
-- 디자인 시안·에셋: **없음**
-- 원격 GitHub 레포 생성·푸시: **없음** (로컬 git init만 된 상태일 수 있음)
+- Phase 0 스파이크: `scripts/spike_usage.py` — PASS
+- Phase 1–2 MVP: Tauri 플로팅 위젯 (`npm run tauri dev`)
+- 디자인 시안·스토어 배포: 없음
+- 원격 푸시: 사용자 요청 시에만
 
 ---
 
