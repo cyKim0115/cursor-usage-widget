@@ -1,0 +1,118 @@
+:root {
+  color-scheme: dark;
+  --bg: rgba(22, 24, 28, 0.92);
+  --fg: #e8eaed;
+  --muted: #9aa0a6;
+  --bar: #2a2f36;
+  --fill: #5b9fd4;
+  --fill-warn: #d4a15b;
+  --fill-hot: #d46b5b;
+  --border: rgba(255, 255, 255, 0.08);
+  font-family: "Segoe UI", "Malgun Gothic", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  user-select: none;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  overflow: hidden;
+}
+
+body {
+  width: 100vw;
+  height: 100vh;
+}
+
+.widget {
+  height: 100%;
+  padding: 10px 12px 8px;
+  border-radius: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.header,
+.footer,
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.plan {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.track {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 600;
+  min-width: 52px;
+}
+
+.caption {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--bar);
+  overflow: hidden;
+}
+
+.fill {
+  height: 100%;
+  width: 0%;
+  border-radius: inherit;
+  background: var(--fill);
+  transition: width 0.35s ease;
+}
+
+.fill.warn {
+  background: var(--fill-warn);
+}
+
+.fill.hot {
+  background: var(--fill-hot);
+}
+
+.status {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.widget.error .status {
+  color: var(--fill-hot);
+}

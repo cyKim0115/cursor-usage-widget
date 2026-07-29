@@ -1,0 +1,21 @@
+[package]
+name = "cursor-usage-widget"
+version = "0.1.0"
+description = "Desktop widget for Cursor included usage (Cursor / Other)"
+authors = ["cykim"]
+edition = "2021"
+
+[lib]
+name = "cursor_usage_widget_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rusqlite = { version = "0.32", features = ["bundled"] }
+ureq = { version = "2.12", features = ["json"] }
+thiserror = "2"

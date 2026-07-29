@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="/src/styles.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cursor Usage</title>
+    <script type="module" src="/src/main.ts" defer></script>
+  </head>
+  <body>
+    <div class="widget" data-tauri-drag-region>
+      <header class="header" data-tauri-drag-region>
+        <span class="title" data-tauri-drag-region>Cursor Usage</span>
+        <span id="plan" class="plan" data-tauri-drag-region></span>
+      </header>
+
+      <section class="track" id="track-cursor">
+        <div class="row">
+          <span class="label">Cursor</span>
+          <span class="caption" id="cursor-caption">—</span>
+        </div>
+        <div class="bar" aria-hidden="true">
+          <div class="fill" id="cursor-fill"></div>
+        </div>
+      </section>
+
+      <section class="track" id="track-other">
+        <div class="row">
+          <span class="label">Other</span>
+          <span class="caption" id="other-caption">—</span>
+        </div>
+        <div class="bar" aria-hidden="true">
+          <div class="fill" id="other-fill"></div>
+        </div>
+      </section>
+
+      <footer class="footer" data-tauri-drag-region>
+        <span id="status" class="status">loading…</span>
+      </footer>
+    </div>
+  </body>
+</html>
