@@ -1,9 +1,4 @@
 import { invoke } from "@tauri-apps/api/core";
-import {
-  disable as disableAutostart,
-  enable as enableAutostart,
-  isEnabled as isAutostartEnabled,
-} from "@tauri-apps/plugin-autostart";
 
 type TrackUsage = {
   label: string;
@@ -26,6 +21,7 @@ type ContextMenuState = {
   x: number;
   y: number;
   autostartEnabled: boolean;
+  isDevBuild: boolean;
 };
 
 function $(id: string): HTMLElement {
@@ -36,7 +32,15 @@ function $(id: string): HTMLElement {
 
 async function getAutostartEnabled(): Promise<boolean> {
   try {
-    return await isAutostartEnabled();
+    return await invoke<boolean>("is_autostart_enabled");
+  } catch {
+    return false;
+  }
+}
+
+async function getIsDevBuild(): Promise<boolean> {
+  try {
+    return await invoke<boolean>("is_dev_build");
   } catch {
     return false;
   }
@@ -54,7 +58,12 @@ function showContextMenu(state: ContextMenuState) {
 
   backdrop.classList.remove("hidden");
   menu.classList.remove("hidden");
-  menuAutostart.textContent = `${state.autostartEnabled ? "✓ " : ""}시작프로그램`;
+
+  if (state.isDevBuild) {
+    menuAutostart.textContent = "시작프로그램 (시작.bat 사용)";
+  } else {
+    menuAutostart.textContent = `${state.autostartEnabled ? "✓ " : ""}시작프로그램`;
+  }
 
   const menuRect = menu.getBoundingClientRect();
   const maxX = Math.max(8, window.innerWidth - menuRect.width - 8);
@@ -68,7 +77,6 @@ function shortCaption(track: TrackUsage): string {
   if (track.percentUsed == null) return "—";
   const used = Math.round(track.percentUsed);
   if (track.displayMessage) {
-    // Prefer compact "% used" over long English sentences in the narrow widget.
     return `${used}% used`;
   }
   return `${used}% used`;
@@ -152,6 +160,7 @@ async function boot() {
       x: event.clientX,
       y: event.clientY,
       autostartEnabled: await getAutostartEnabled(),
+      isDevBuild: await getIsDevBuild(),
     });
   });
 
@@ -183,18 +192,28 @@ async function boot() {
     event.stopPropagation();
     menuAutostart.disabled = true;
     try {
+      const isDev = await getIsDevBuild();
+      if (isDev) {
+        window.alert(
+          "개발 모드에서는 시작프로그램을 바꿀 수 없습니다.\n\n「시작.bat」으로 설치·실행한 뒤, 위젯에서 다시 우클릭 → 시작프로그램을 켜 주세요.",
+        );
+        return;
+      }
       const enabled = await getAutostartEnabled();
       if (enabled) {
-        await disableAutostart();
+        await invoke("disable_autostart");
       } else {
-        await enableAutostart();
+        await invoke("enable_autostart");
       }
+    } catch (e) {
+      window.alert(String(e));
     } finally {
       menuAutostart.disabled = false;
       showContextMenu({
         x: parseFloat($("context-menu").style.left || "0"),
         y: parseFloat($("context-menu").style.top || "0"),
         autostartEnabled: await getAutostartEnabled(),
+        isDevBuild: await getIsDevBuild(),
       });
     }
   });

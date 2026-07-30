@@ -1,9 +1,12 @@
 mod auth;
+mod install;
 mod usage;
 
 use auth::{default_db_path, read_access_token};
-#[cfg(desktop)]
-use tauri_plugin_autostart::MacosLauncher;
+use install::{
+    autostart_disable, autostart_enable, autostart_is_enabled, cleanup_stale_debug_autostart,
+    ensure_installed_release, guard_debug_requires_vite,
+};
 use usage::{fetch_error, fetch_usage, need_login, UsageSnapshot};
 
 const POLL_INTERVAL_MS: u64 = 300_000;
@@ -30,18 +33,52 @@ fn quit_app(app: tauri::AppHandle) {
     app.exit(0);
 }
 
+#[tauri::command]
+fn is_dev_build() -> bool {
+    cfg!(debug_assertions)
+}
+
+#[tauri::command]
+fn enable_autostart() -> Result<(), String> {
+    autostart_enable()
+}
+
+#[tauri::command]
+fn disable_autostart() -> Result<(), String> {
+    autostart_disable()
+}
+
+#[tauri::command]
+fn is_autostart_enabled() -> Result<bool, String> {
+    autostart_is_enabled()
+}
+
+#[tauri::command]
+fn install_release_copy() -> Result<String, String> {
+    ensure_installed_release().map(|p| p.display().to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    guard_debug_requires_vite();
+
     tauri::Builder::default()
-        .plugin(tauri_plugin_autostart::init(
-            MacosLauncher::LaunchAgent,
-            None::<Vec<&'static str>>,
-        ))
         .invoke_handler(tauri::generate_handler![
             get_usage,
             get_poll_interval_ms,
-            quit_app
+            quit_app,
+            is_dev_build,
+            enable_autostart,
+            disable_autostart,
+            is_autostart_enabled,
+            install_release_copy
         ])
+        .setup(|_app| {
+            cleanup_stale_debug_autostart();
+            // Release builds keep a stable copy under LOCALAPPDATA for shortcuts/autostart.
+            let _ = ensure_installed_release();
+            Ok(())
+        })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
