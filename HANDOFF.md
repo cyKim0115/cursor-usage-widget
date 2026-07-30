@@ -102,7 +102,10 @@ Windows 바탕화면 위에 Steam **Mini Cozy Room**처럼 떠 있는 작은 위
 ## 7. 구현 상태 (갱신)
 
 - Phase 0 스파이크: `scripts/spike_usage.py` — PASS
-- Phase 1–2 MVP: Tauri 플로팅 위젯 (`npm run tauri dev`)
+- Phase 1–2 MVP: Tauri 플로팅 위젯
+- **일반 실행:** `시작.bat` → `%LOCALAPPDATA%\CursorUsageWidget\` 설치본 (Vite 불필요)
+- **시작프로그램:** 설치본 경로만 등록 (debug exe 등록 금지)
+- 개발: `npm run tauri dev` (Vite 필요). `target\debug\*.exe` 단독 실행 금지
 - 디자인 시안·스토어 배포: 없음
 - 원격 푸시: 사용자 요청 시에만
 
@@ -111,19 +114,18 @@ Windows 바탕화면 위에 Steam **Mini Cozy Room**처럼 떠 있는 작은 위
 ## 8. Open Decisions — 승인됨 (2026-07-29)
 
 1. **비주얼** — 프로그레스바 + 간단 문구 (룸형 거부)  
-2. **창 동작** — always-on-top + 드래그; 클릭 스루·자동시작은 후순위  
+2. **창 동작** — always-on-top + 드래그; 자동시작은 설치본 경로로 지원; 클릭 스루는 후순위  
 3. **표시** — Cursor / Other 각 `used / limit`(또는 잔여·%) + 바  
 4. **스택** — Tauri 2  
 5. **실패 UX** — NeedLogin vs FetchError 구분  
 
 ---
 
-## 9. 다음 작업 (착수)
+## 9. 다음 작업
 
-1. Phase 0: 토큰 → usage → Cursor·Other 필드 맵핑 스파이크  
-2. Phase 1: 플로팅 창 스캐폴드  
-3. Phase 2: 듀얼 바 UI + 폴링  
-4. Phase 3: 설정·위치 persist·README  
+1. 위치 persist  
+2. (옵션) NSIS 설치 패키지·코드서명  
+3. 클릭 스루 
 
 ---
 

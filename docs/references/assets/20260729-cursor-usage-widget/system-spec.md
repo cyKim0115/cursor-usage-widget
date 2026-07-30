@@ -184,7 +184,8 @@ src/
 
 ### Phase 4 — Optional (defer)
 
-- autostart, click-through, 트레이 보조(메인 UX는 플로팅 유지)
+- click-through, 트레이 보조(메인 UX는 플로팅 유지)
+- autostart: **2026-07-30 구현** — `%LOCALAPPDATA%\CursorUsageWidget` 설치본 + `시작.bat` (idea `20260730-standalone-launch`)
 
 ## Edge cases to handle now
 
@@ -196,7 +197,7 @@ src/
 
 ## Deferred
 
-- 룸형 UI, autostart, click-through, multi-account, non-Windows
+- 룸형 UI, click-through, multi-account, non-Windows
 - On-demand 일체
 - 모델별(개별 모델명) 상세 브레이크다운 (트랙은 Cursor vs Other 집계만)
 
@@ -205,7 +206,7 @@ src/
 | # | Decision | Approved choice |
 |---|----------|-----------------|
 | 1 | 비주얼 | 프로그레스바 + 간단 문구 (룸형 아님) |
-| 2 | 창 동작 | always-on-top + drag; click-through/autostart defer |
+| 2 | 창 동작 | always-on-top + drag; autostart=설치본 경로; click-through defer |
 | 3 | 표시 | Cursor·Other 각 바 + used/limit(또는 잔여·%) |
 | 4 | 스택 | Tauri 2 |
 | 5 | 실패 UX | NeedLogin vs FetchError 구분 |
