@@ -81,6 +81,7 @@ try {
   $lnk.TargetPath = $InstallExe
   $lnk.WorkingDirectory = $InstallDir
   $lnk.Description = "Cursor Usage floating widget"
+  $lnk.IconLocation = "$InstallExe,0"
   $lnk.Save()
 } catch {
   # ignore shortcut failures
