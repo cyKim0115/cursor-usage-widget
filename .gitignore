@@ -1,4 +1,4 @@
-# Node / Vite
+﻿# Node / Vite
 node_modules/
 dist/
 dist-ssr/
@@ -7,16 +7,16 @@ npm-debug.log*
 
 # Tauri / Rust
 src-tauri/target/
-
 # OS / editor
 .DS_Store
 Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
-
 # Local secrets / dumps (never commit tokens)
 *.token
 *.pem
 .env
 .env.*
+.tmp-pe-icons/
+scripts/__pycache__/

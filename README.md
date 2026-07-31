@@ -30,9 +30,13 @@ npm run tauri dev
 | 명령 | 용도 |
 |------|------|
 | `시작.bat` / `npm run start:app` | 설치본 실행 (비개발자) |
-| `npm run build:app` | 릴리스 빌드만 |
+| `npm run make:icon` | `app-icon.png` → `src-tauri/icons` (BMP ICO) |
+| `npm run build:app` | 릴리스 빌드만 (아이콘은 exe에 임베드) |
 | `npm run tauri dev` | Vite + debug (개발) |
 | `npm run spike` | usage API 스파이크 |
+
+아이콘을 바꿀 때: `app-icon.png` 교체 → `npm run make:icon` → `npm run build:app` → `시작.bat`.  
+exe 옆에 `icon.ico`를 두는 것만으로는 Windows 탐색기 아이콘이 바뀌지 않는다.
 
 ## 주의
 

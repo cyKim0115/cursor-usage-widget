@@ -61,17 +61,24 @@ if (-not (Test-Path $InstallExe)) {
       Pop-Location
     }
   }
-  New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
-  Copy-Item -Force $ReleaseExe $InstallExe
-  Write-Host "Installed: $InstallExe"
-} elseif (Test-Path $ReleaseExe) {
-  $src = Get-Item $ReleaseExe
-  $dst = Get-Item $InstallExe
-  if ($src.LastWriteTime -gt $dst.LastWriteTime -or $src.Length -ne $dst.Length) {
-    Copy-Item -Force $ReleaseExe $InstallExe
-    Write-Host "Updated install copy from latest release."
-  }
 }
+
+if (-not (Test-Path $ReleaseExe) -and -not (Test-Path $InstallExe)) {
+  Show-Error "Release exe not found. Run npm run build:app first."
+  exit 1
+}
+
+New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
+# Windows caches icons by path — replace via temp name so Explorer picks up the new PE icon.
+if (Test-Path $ReleaseExe) {
+  $tmp = Join-Path $InstallDir "cursor-usage-widget.new.exe"
+  Copy-Item -Force $ReleaseExe $tmp
+  if (Test-Path $InstallExe) { Remove-Item -Force $InstallExe }
+  Rename-Item -Force $tmp (Split-Path $InstallExe -Leaf)
+  Write-Host "Installed: $InstallExe"
+}
+# Loose .ico next to the exe does NOT change the exe icon; remove leftovers.
+Remove-Item (Join-Path $InstallDir "icon.ico") -Force -ErrorAction SilentlyContinue
 
 try {
   $desktop = [Environment]::GetFolderPath("Desktop")
