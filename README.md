@@ -32,17 +32,12 @@ npm run tauri dev
 | 명령 | 용도 |
 |------|------|
 | `시작.bat` / `npm run start:app` | 설치본 실행 (비개발자) |
-| `npm run make:icon` | `app-icon.png` → `src-tauri/icons` (BMP ICO) |
-| `npm run build:app` | 릴리스 빌드만 (아이콘은 exe에 임베드) |
+| `npm run build:app` | 릴리스 빌드만 |
 | `npm run tauri dev` | Vite + debug (개발) |
 | `npm run spike` | usage API 스파이크 |
-
-아이콘을 바꿀 때는 `app-icon.png`를 교체한 뒤 `npm run make:icon` → `npm run build:app` → `시작.bat` 순으로 실행하세요.  
-exe 옆에 `icon.ico`를 두는 것만으로는 Windows 탐색기 아이콘이 바뀌지 않습니다.
 
 ## 주의
 
 - 인증은 로컬 `%APPDATA%\Cursor\User\globalStorage\state.vscdb`의 `cursorAuth/accessToken`을 읽습니다.
-- Cursor 내부 API는 **비공식**이며 언제든 깨질 수 있습니다. 장애 시 [대시보드](https://cursor.com/dashboard)가 진실의 원천입니다.
-- 토큰을 로그·커밋·원격 전송하지 마세요.
+- Cursor 내부 API는 **비공식**이며 언제든 깨질 수 있습니다.
 - On-demand UI는 범위 밖입니다.
