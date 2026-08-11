@@ -2,6 +2,8 @@
 
 Windows 바탕화면용 플로팅 위젯. Cursor **included** 사용량을 **Cursor / Other** 두 트랙으로 프로그레스바 + 짧은 문구로 표시한다.
 
+![위젯 UI 미리보기](docs/assets/widget-ui.png)
+
 스펙: `docs/references/assets/20260729-cursor-usage-widget/system-spec.md`  
 스파이크: `python scripts/spike_usage.py`
 
