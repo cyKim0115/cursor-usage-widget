@@ -1,6 +1,6 @@
 # Cursor Usage Widget
 
-Windows 바탕화면용 플로팅 위젯. Cursor **included** 사용량을 **Cursor / Other** 두 트랙으로 프로그레스바 + 짧은 문구로 표시한다.
+Windows 바탕화면용 플로팅 위젯입니다. Cursor **included** 사용량을 **Cursor / Other** 두 트랙으로 프로그레스바와 짧은 문구로 표시합니다.
 
 ![위젯 UI 미리보기](docs/assets/widget-ui.png)
 
@@ -9,14 +9,14 @@ Windows 바탕화면용 플로팅 위젯. Cursor **included** 사용량을 **Cur
 
 ## 일반 사용자 (추천)
 
-1. 프로젝트 폴더의 **`시작.bat`** 을 더블클릭한다.
+1. 프로젝트 폴더의 **`시작.bat`** 을 더블클릭하세요.
 2. 처음 한 번만 릴리스 빌드·설치가 진행되고, 이후에는  
-   `%LOCALAPPDATA%\CursorUsageWidget\cursor-usage-widget.exe` 가 바로 실행된다.
-3. 바탕화면에 **Cursor Usage Widget** 바로가기도 만들어 둔다.
-4. 위젯에서 **우클릭 → 시작프로그램** 으로 부팅 시 자동 실행을 켠다.  
-   (항상 위 설치 경로만 등록하므로, `target\debug` exe를 직접 켜도 시작프로그램이 깨지지 않는다.)
+   `%LOCALAPPDATA%\CursorUsageWidget\cursor-usage-widget.exe` 가 바로 실행됩니다.
+3. 바탕화면에 **Cursor Usage Widget** 바로가기도 만들어 둡니다.
+4. 위젯에서 **우클릭 → 시작프로그램** 으로 부팅 시 자동 실행을 켤 수 있습니다.  
+   (항상 위 설치 경로만 등록하므로, `target\debug` exe를 직접 켜도 시작프로그램이 깨지지 않습니다.)
 
-`target\debug\*.exe` 를 찾아 실행하면 **개발용**이라 화면이 비어 보이거나 안내 창만 뜹니다. 쓰지 마세요.
+`target\debug\*.exe` 를 찾아 실행하면 **개발용**이라 화면이 비어 보이거나 안내 창만 뜹니다. 사용하지 마세요.
 
 ## 개발 실행
 
@@ -25,7 +25,7 @@ npm install
 npm run tauri dev
 ```
 
-요구: Windows + Cursor 로그인, Node.js, Rust, Visual Studio C++ Build Tools, WebView2.
+요구 사항: Windows + Cursor 로그인, Node.js, Rust, Visual Studio C++ Build Tools, WebView2.
 
 ## 스크립트
 
@@ -37,12 +37,12 @@ npm run tauri dev
 | `npm run tauri dev` | Vite + debug (개발) |
 | `npm run spike` | usage API 스파이크 |
 
-아이콘을 바꿀 때: `app-icon.png` 교체 → `npm run make:icon` → `npm run build:app` → `시작.bat`.  
-exe 옆에 `icon.ico`를 두는 것만으로는 Windows 탐색기 아이콘이 바뀌지 않는다.
+아이콘을 바꿀 때는 `app-icon.png`를 교체한 뒤 `npm run make:icon` → `npm run build:app` → `시작.bat` 순으로 실행하세요.  
+exe 옆에 `icon.ico`를 두는 것만으로는 Windows 탐색기 아이콘이 바뀌지 않습니다.
 
 ## 주의
 
-- 인증은 로컬 `%APPDATA%\Cursor\User\globalStorage\state.vscdb`의 `cursorAuth/accessToken`을 읽는다.
-- Cursor 내부 API는 **비공식**이며 언제든 깨질 수 있다. 장애 시 [대시보드](https://cursor.com/dashboard)가 진실의 원천이다.
-- 토큰을 로그·커밋·원격 전송하지 말 것.
-- On-demand UI는 범위 밖이다.
+- 인증은 로컬 `%APPDATA%\Cursor\User\globalStorage\state.vscdb`의 `cursorAuth/accessToken`을 읽습니다.
+- Cursor 내부 API는 **비공식**이며 언제든 깨질 수 있습니다. 장애 시 [대시보드](https://cursor.com/dashboard)가 진실의 원천입니다.
+- 토큰을 로그·커밋·원격 전송하지 마세요.
+- On-demand UI는 범위 밖입니다.
