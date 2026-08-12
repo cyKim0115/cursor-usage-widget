@@ -86,20 +86,20 @@ function shortCaption(track: TrackUsage): string {
 function formatRenewalRemaining(endMs: number | null): string {
   if (endMs == null) return "";
   const diff = endMs - Date.now();
-  if (diff <= 0) return "갱신됨";
+  if (diff <= 0) return "0 days left";
 
   const dayMs = 24 * 60 * 60 * 1000;
   const hourMs = 60 * 60 * 1000;
   const minuteMs = 60 * 1000;
 
   const days = Math.floor(diff / dayMs);
-  if (days >= 1) return `갱신까지 ${days}일`;
+  if (days >= 1) return days === 1 ? "1 day left" : `${days} days left`;
 
   const hours = Math.floor(diff / hourMs);
-  if (hours >= 1) return `갱신까지 ${hours}시간`;
+  if (hours >= 1) return hours === 1 ? "1 hour left" : `${hours} hours left`;
 
   const minutes = Math.max(1, Math.floor(diff / minuteMs));
-  return `갱신까지 ${minutes}분`;
+  return minutes === 1 ? "1 minute left" : `${minutes} minutes left`;
 }
 
 function setFill(el: HTMLElement, percent: number | null) {
