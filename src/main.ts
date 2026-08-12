@@ -12,6 +12,7 @@ type UsageSnapshot = {
   state: string;
   planName: string | null;
   includedUsd: number | null;
+  billingCycleEndMs: number | null;
   cursor: TrackUsage;
   other: TrackUsage;
   error: string | null;
@@ -82,6 +83,25 @@ function shortCaption(track: TrackUsage): string {
   return `${used}% used`;
 }
 
+function formatRenewalRemaining(endMs: number | null): string {
+  if (endMs == null) return "";
+  const diff = endMs - Date.now();
+  if (diff <= 0) return "갱신됨";
+
+  const dayMs = 24 * 60 * 60 * 1000;
+  const hourMs = 60 * 60 * 1000;
+  const minuteMs = 60 * 1000;
+
+  const days = Math.floor(diff / dayMs);
+  if (days >= 1) return `갱신까지 ${days}일`;
+
+  const hours = Math.floor(diff / hourMs);
+  if (hours >= 1) return `갱신까지 ${hours}시간`;
+
+  const minutes = Math.max(1, Math.floor(diff / minuteMs));
+  return `갱신까지 ${minutes}분`;
+}
+
 function setFill(el: HTMLElement, percent: number | null) {
   const p = Math.max(0, Math.min(100, percent ?? 0));
   el.style.width = `${p}%`;
@@ -109,6 +129,7 @@ function render(snap: UsageSnapshot) {
   setFill($("other-fill"), snap.other.percentUsed);
 
   const status = $("status");
+  const renewal = $("renewal");
   const now = new Date();
   const hhmm = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   if (snap.state === "OK") {
@@ -118,6 +139,7 @@ function render(snap: UsageSnapshot) {
   } else {
     status.textContent = snap.error ? `갱신 실패 · ${hhmm}` : `갱신 실패 · ${hhmm}`;
   }
+  renewal.textContent = formatRenewalRemaining(snap.billingCycleEndMs);
 }
 
 async function refresh() {
@@ -129,6 +151,7 @@ async function refresh() {
       state: "FetchError",
       planName: null,
       includedUsd: null,
+      billingCycleEndMs: null,
       cursor: {
         label: "Cursor",
         percentUsed: null,

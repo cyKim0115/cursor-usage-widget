@@ -29,6 +29,7 @@ pub struct UsageSnapshot {
     pub state: String,
     pub plan_name: Option<String>,
     pub included_usd: Option<f64>,
+    pub billing_cycle_end_ms: Option<i64>,
     pub cursor: TrackUsage,
     pub other: TrackUsage,
     pub error: Option<String>,
@@ -36,6 +37,8 @@ pub struct UsageSnapshot {
 
 #[derive(Debug, Deserialize)]
 struct UsageResponse {
+    #[serde(rename = "billingCycleEnd")]
+    billing_cycle_end: Option<String>,
     #[serde(rename = "planUsage")]
     plan_usage: Option<PlanUsage>,
     #[serde(rename = "autoModelSelectedDisplayMessage")]
@@ -64,6 +67,12 @@ struct PlanInfo {
     plan_name: Option<String>,
     #[serde(rename = "includedAmountCents")]
     included_amount_cents: Option<f64>,
+    #[serde(rename = "billingCycleEnd")]
+    billing_cycle_end: Option<String>,
+}
+
+fn parse_ms_timestamp(raw: &str) -> Option<i64> {
+    raw.parse::<i64>().ok()
 }
 
 fn post_json(path: &str, token: &str) -> Result<serde_json::Value, UsageError> {
@@ -117,10 +126,22 @@ pub fn fetch_usage(token: &str) -> Result<UsageSnapshot, UsageError> {
         .and_then(|p| p.included_amount_cents)
         .map(|c| c / 100.0);
 
+    let billing_cycle_end_ms = usage
+        .billing_cycle_end
+        .as_deref()
+        .and_then(parse_ms_timestamp)
+        .or_else(|| {
+            plan.plan_info
+                .as_ref()
+                .and_then(|p| p.billing_cycle_end.as_deref())
+                .and_then(parse_ms_timestamp)
+        });
+
     Ok(UsageSnapshot {
         state: "OK".into(),
         plan_name: plan.plan_info.and_then(|p| p.plan_name),
         included_usd,
+        billing_cycle_end_ms,
         cursor: track(
             "Cursor",
             "planUsage.autoPercentUsed",
@@ -142,6 +163,7 @@ pub fn need_login(message: String) -> UsageSnapshot {
         state: "NeedLogin".into(),
         plan_name: None,
         included_usd: None,
+        billing_cycle_end_ms: None,
         cursor: track("Cursor", "planUsage.autoPercentUsed", None, None),
         other: track("Other", "planUsage.apiPercentUsed", None, None),
         error: Some(message),
@@ -153,6 +175,7 @@ pub fn fetch_error(message: String) -> UsageSnapshot {
         state: "FetchError".into(),
         plan_name: None,
         included_usd: None,
+        billing_cycle_end_ms: None,
         cursor: track("Cursor", "planUsage.autoPercentUsed", None, None),
         other: track("Other", "planUsage.apiPercentUsed", None, None),
         error: Some(message),
