@@ -1,5 +1,10 @@
 # Launches the standalone widget for non-developers.
-# Installs release exe to %LOCALAPPDATA%\CursorUsageWidget\ and starts it.
+# Rebuilds release when source is newer than the release exe.
+# Use -ForceRebuild to always rebuild before install (agent / post-task refresh).
+
+param(
+  [switch]$ForceRebuild
+)
 
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
@@ -10,6 +15,7 @@ if (-not (Test-Path (Join-Path $Root "package.json"))) {
 $InstallDir = Join-Path $env:LOCALAPPDATA "CursorUsageWidget"
 $InstallExe = Join-Path $InstallDir "cursor-usage-widget.exe"
 $ReleaseExe = Join-Path $Root "src-tauri\target\release\cursor-usage-widget.exe"
+$ProcessName = "cursor-usage-widget"
 
 function Show-Error([string]$Message) {
   Add-Type -AssemblyName PresentationFramework | Out-Null
@@ -32,6 +38,39 @@ function Ensure-VcEnv {
   return $bat
 }
 
+function Get-SourceStamp {
+  $paths = @(
+    (Join-Path $Root "package.json"),
+    (Join-Path $Root "index.html"),
+    (Join-Path $Root "vite.config.ts"),
+    (Join-Path $Root "src-tauri\Cargo.toml"),
+    (Join-Path $Root "src-tauri\tauri.conf.json")
+  )
+  $latest = [datetime]::MinValue
+  foreach ($p in $paths) {
+    if (Test-Path $p) {
+      $t = (Get-Item $p).LastWriteTimeUtc
+      if ($t -gt $latest) { $latest = $t }
+    }
+  }
+  foreach ($dir in @("src", "src-tauri\src", "src-tauri\capabilities")) {
+    $full = Join-Path $Root $dir
+    if (-not (Test-Path $full)) { continue }
+    Get-ChildItem $full -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object {
+      if ($_.LastWriteTimeUtc -gt $latest) { $latest = $_.LastWriteTimeUtc }
+    }
+  }
+  return $latest
+}
+
+function Test-NeedsRebuild {
+  if ($ForceRebuild) { return $true }
+  if (-not (Test-Path $ReleaseExe)) { return $true }
+  $builtAt = (Get-Item $ReleaseExe).LastWriteTimeUtc
+  $sourceAt = Get-SourceStamp
+  return $sourceAt -gt $builtAt
+}
+
 function Build-Release {
   $vcvars = Ensure-VcEnv
   if (-not $vcvars) {
@@ -40,6 +79,15 @@ function Build-Release {
   }
 
   Write-Host "Building release (first time may take a few minutes)..."
+  if (-not (Test-Path (Join-Path $Root "node_modules"))) {
+    Push-Location $Root
+    npm install
+    Pop-Location
+    if ($LASTEXITCODE -ne 0) {
+      Show-Error "npm install failed."
+      exit 1
+    }
+  }
   $cmd = "`"$vcvars`" && cd /d `"$Root`" && npm run build:app"
   cmd /c $cmd
   if ($LASTEXITCODE -ne 0 -or -not (Test-Path $ReleaseExe)) {
@@ -48,35 +96,32 @@ function Build-Release {
   }
 }
 
-if (-not (Test-Path $InstallExe)) {
-  if (-not (Test-Path $ReleaseExe)) {
-    Push-Location $Root
-    try {
-      if (-not (Test-Path (Join-Path $Root "node_modules"))) {
-        Write-Host "npm install..."
-        npm install
-      }
-      Build-Release
-    } finally {
-      Pop-Location
-    }
+function Stop-RunningWidget {
+  Get-Process -Name $ProcessName -ErrorAction SilentlyContinue | ForEach-Object {
+    Write-Host "Stopping running widget (PID $($_.Id))..."
+    Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue
+    Start-Sleep -Milliseconds 400
   }
 }
 
-if (-not (Test-Path $ReleaseExe) -and -not (Test-Path $InstallExe)) {
+if (Test-NeedsRebuild) {
+  Build-Release
+}
+
+if (-not (Test-Path $ReleaseExe)) {
   Show-Error "Release exe not found. Run npm run build:app first."
   exit 1
 }
 
+Stop-RunningWidget
+
 New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
 # Windows caches icons by path — replace via temp name so Explorer picks up the new PE icon.
-if (Test-Path $ReleaseExe) {
-  $tmp = Join-Path $InstallDir "cursor-usage-widget.new.exe"
-  Copy-Item -Force $ReleaseExe $tmp
-  if (Test-Path $InstallExe) { Remove-Item -Force $InstallExe }
-  Rename-Item -Force $tmp (Split-Path $InstallExe -Leaf)
-  Write-Host "Installed: $InstallExe"
-}
+$tmp = Join-Path $InstallDir "cursor-usage-widget.new.exe"
+Copy-Item -Force $ReleaseExe $tmp
+if (Test-Path $InstallExe) { Remove-Item -Force $InstallExe }
+Rename-Item -Force $tmp (Split-Path $InstallExe -Leaf)
+Write-Host "Installed: $InstallExe"
 # Loose .ico next to the exe does NOT change the exe icon; remove leftovers.
 Remove-Item (Join-Path $InstallDir "icon.ico") -Force -ErrorAction SilentlyContinue
 

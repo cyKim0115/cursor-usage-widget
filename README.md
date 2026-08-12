@@ -32,6 +32,7 @@ npm run tauri dev
 | 명령 | 용도 |
 |------|------|
 | `시작.bat` / `npm run start:app` | 설치본 실행 (비개발자) |
+| `npm run rebuild:app` | release 강제 재빌드·재시작 (작업 완료 후) |
 | `npm run build:app` | 릴리스 빌드만 |
 | `npm run tauri dev` | Vite + debug (개발) |
 | `npm run spike` | usage API 스파이크 |
