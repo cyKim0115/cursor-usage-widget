@@ -88,9 +88,15 @@ function Build-Release {
       exit 1
     }
   }
+  # A stale exe from an earlier build survives a failed build, so Test-Path alone
+  # would pass. Require the timestamp to move forward instead.
+  $before = [datetime]::MinValue
+  if (Test-Path $ReleaseExe) { $before = (Get-Item $ReleaseExe).LastWriteTimeUtc }
   $cmd = "`"$vcvars`" && cd /d `"$Root`" && npm run build:app"
   cmd /c $cmd
-  if ($LASTEXITCODE -ne 0 -or -not (Test-Path $ReleaseExe)) {
+  $after = [datetime]::MinValue
+  if (Test-Path $ReleaseExe) { $after = (Get-Item $ReleaseExe).LastWriteTimeUtc }
+  if ($LASTEXITCODE -ne 0 -or $after -le $before) {
     Show-Error "Build failed. Check Node.js / Rust / VS Build Tools."
     exit 1
   }
@@ -105,6 +111,8 @@ function Stop-RunningWidget {
 }
 
 if (Test-NeedsRebuild) {
+  # A running widget holds a write lock on the release exe and breaks cargo's link step.
+  Stop-RunningWidget
   Build-Release
 }
 
