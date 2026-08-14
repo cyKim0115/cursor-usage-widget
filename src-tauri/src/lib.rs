@@ -7,6 +7,7 @@ use install::{
     autostart_disable, autostart_enable, autostart_is_enabled, cleanup_stale_debug_autostart,
     ensure_installed_release, guard_debug_requires_vite,
 };
+use tauri_plugin_window_state::StateFlags;
 use usage::{fetch_error, fetch_usage, need_login, UsageSnapshot};
 
 const POLL_INTERVAL_MS: u64 = 300_000;
@@ -63,6 +64,13 @@ pub fn run() {
     guard_debug_requires_vite();
 
     tauri::Builder::default()
+        // 위치만 복원합니다. 창 크기는 tauri.conf.json 이 정하므로, 크기까지
+        // 저장하면 지난 실행의 크기가 갱신된 레이아웃 높이를 덮어씁니다.
+        .plugin(
+            tauri_plugin_window_state::Builder::default()
+                .with_state_flags(StateFlags::POSITION)
+                .build(),
+        )
         .invoke_handler(tauri::generate_handler![
             get_usage,
             get_poll_interval_ms,
