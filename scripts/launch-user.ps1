@@ -105,7 +105,11 @@ function Build-Release {
 function Stop-RunningWidget {
   Get-Process -Name $ProcessName -ErrorAction SilentlyContinue | ForEach-Object {
     Write-Host "Stopping running widget (PID $($_.Id))..."
-    Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue
+    # 강제 종료는 창 위치 저장 단계를 건너뛰므로 먼저 정상 종료를 시도한다.
+    $_.CloseMainWindow() | Out-Null
+    if (-not $_.WaitForExit(3000)) {
+      Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue
+    }
     Start-Sleep -Milliseconds 400
   }
 }
