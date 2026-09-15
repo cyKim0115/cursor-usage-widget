@@ -39,6 +39,16 @@ fn quit_app(app: tauri::AppHandle) {
     app.exit(0);
 }
 
+/// The preference lives in the webview, so the menu and startup both push it
+/// onto the main window through here.
+#[tauri::command]
+fn set_always_on_top(app: tauri::AppHandle, enabled: bool) -> Result<(), String> {
+    let window = app
+        .get_webview_window("main")
+        .ok_or_else(|| "main window not found".to_string())?;
+    window.set_always_on_top(enabled).map_err(|e| e.to_string())
+}
+
 #[tauri::command]
 fn is_dev_build() -> bool {
     cfg!(debug_assertions)
@@ -110,7 +120,8 @@ pub fn run() {
             enable_autostart,
             disable_autostart,
             is_autostart_enabled,
-            install_release_copy
+            install_release_copy,
+            set_always_on_top
         ])
         .setup(|app| {
             persist_position_on_move(app.handle());
