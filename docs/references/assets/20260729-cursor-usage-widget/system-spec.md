@@ -103,14 +103,16 @@ On-demand / spend limit 필드는 파싱해도 UI에 노출하지 않음.
 
 ```
 ┌─────────────────────────────┐
-│ Cursor  [========----] 문구 │
-│ Other   [===---------] 문구 │
-│ updated HH:MM               │  ← 선택·작게
+│ Cursor   [========----] 문구 │
+│ Other    [===---------] 문구 │
+│ Grok Bot [==----------] 문구 │  ← 주간 sand (허용치 있을 때만)
+│ updated HH:MM · N days left │
 └─────────────────────────────┘
 ```
 
 - 룸/배경 일러스트/배지 스티커 없음
 - 프로그레스바 fill = `used / limit` (limit=0이면 빈 바 + 오류/불명 문구)
+- Grok Bot: `GetSandUsageStatus` (`usagePercent`, `nextResetTimestampUtc`); idea `20260922-grok-bot-usage-track`
 
 ## Implementation sketch
 

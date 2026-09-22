@@ -25,6 +25,7 @@
 |--------|-----|-----|
 | POST | `https://api2.cursor.sh/aiserver.v1.DashboardService/GetCurrentPeriodUsage` | 듀얼 % + 문구 |
 | POST | `https://api2.cursor.sh/aiserver.v1.DashboardService/GetPlanInfo` | 플랜명·included USD |
+| POST | `https://api2.cursor.sh/aiserver.v1.DashboardService/GetSandUsageStatus` | Grok Bot 주간 % + 리셋 |
 
 공통 헤더: `Content-Type: application/json`, `Connect-Protocol-Version: 1`, Bearer.
 
@@ -34,8 +35,11 @@
 |----------|-----------|---------|
 | **Cursor** | `planUsage.autoPercentUsed` | `autoModelSelectedDisplayMessage` |
 | **Other** | `planUsage.apiPercentUsed` | `namedModelSelectedDisplayMessage` |
+| **Grok Bot** | `GetSandUsageStatus.usagePercent` | `nextResetTimestampUtc` (주간 리셋) |
 
-대시보드 용어: Auto/Composer ≈ Cursor, named/API ≈ Other.
+대시보드 용어: Auto/Composer ≈ Cursor, named/API ≈ Other, sand ≈ Grok Bot (주간 풀).
+
+`hasNonZeroIncludedLimit` / `hasAvailableUsage` 가 false면 Grok Bot 줄 숨김.
 
 프로그레스바 fill = `percent_used / 100`.  
 문구 예: `You've used 20% of your included total usage` / API 동등 문구.  

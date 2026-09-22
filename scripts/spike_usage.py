@@ -21,6 +21,7 @@ from typing import Any
 API_BASE = "https://api2.cursor.sh"
 USAGE_PATH = "/aiserver.v1.DashboardService/GetCurrentPeriodUsage"
 PLAN_PATH = "/aiserver.v1.DashboardService/GetPlanInfo"
+SAND_PATH = "/aiserver.v1.DashboardService/GetSandUsageStatus"
 
 
 def default_db_path() -> Path:
@@ -130,6 +131,10 @@ def main() -> int:
     try:
         usage = post_json(USAGE_PATH, token)
         plan = post_json(PLAN_PATH, token)
+        try:
+            sand = post_json(SAND_PATH, token)
+        except Exception as sand_err:
+            sand = {"_error": str(sand_err)}
     except Exception as e:
         print(
             json.dumps(
@@ -148,6 +153,14 @@ def main() -> int:
     cursor, other = parse_tracks(usage)
     plan_usage = usage.get("planUsage") or {}
     plan_info = (plan.get("planInfo") or {}) if isinstance(plan, dict) else {}
+    sand_ok = isinstance(sand, dict) and "_error" not in sand
+    grok_visible = bool(
+        sand_ok
+        and (
+            sand.get("hasNonZeroIncludedLimit")
+            or sand.get("hasAvailableUsage")
+        )
+    )
 
     out = {
         "ok": True,
@@ -174,11 +187,20 @@ def main() -> int:
             "cursor": asdict(cursor)
             | {"remaining_percent": cursor.remaining_percent},
             "other": asdict(other) | {"remaining_percent": other.remaining_percent},
+            "grok_bot": {
+                "visible": grok_visible,
+                "label": "Grok Bot",
+                "source_field": "sand.usagePercent",
+                "percent_used": _as_float(sand.get("usagePercent")) if sand_ok else None,
+                "next_reset_at": sand.get("nextResetTimestampUtc") if sand_ok else None,
+                "error": None if sand_ok else sand.get("_error"),
+            },
         },
         "field_map": {
             "Cursor": "autoPercentUsed (+ autoModelSelectedDisplayMessage)",
             "Other": "apiPercentUsed (+ namedModelSelectedDisplayMessage)",
-            "note": "Dashboard Auto/Composer ~= Cursor; named/API ~= Other",
+            "Grok Bot": "GetSandUsageStatus.usagePercent (+ nextResetTimestampUtc)",
+            "note": "Dashboard Auto/Composer ~= Cursor; named/API ~= Other; Grok Bot = weekly sand pool",
         },
     }
     print(json.dumps(out, ensure_ascii=False, indent=2))

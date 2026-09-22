@@ -69,10 +69,14 @@ body {
   gap: 4px;
 }
 
+.track.hidden {
+  display: none;
+}
+
 .label {
   font-size: 12px;
   font-weight: 600;
-  min-width: 52px;
+  min-width: 64px;
 }
 
 .caption {

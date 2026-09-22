@@ -6,3 +6,4 @@
 | 20260729-visual-minimal | Progress bar + short text (no room UI) | ADOPT_WITH_CHANGES | decided | `20260729-visual-minimal.md` |
 | 20260729-dual-track-usage | Show Cursor + Other model usage | ADOPT | decided | `20260729-dual-track-usage.md` |
 | 20260730-standalone-launch | Standalone exe + stable autostart path | ADOPT_WITH_CHANGES | decided | `20260730-standalone-launch.md` |
+| 20260922-grok-bot-usage-track | Show Grok Bot weekly usage track | ADOPT_WITH_CHANGES | decided | `20260922-grok-bot-usage-track.md` |

@@ -4,6 +4,7 @@ use thiserror::Error;
 const API_BASE: &str = "https://api2.cursor.sh";
 const USAGE_PATH: &str = "/aiserver.v1.DashboardService/GetCurrentPeriodUsage";
 const PLAN_PATH: &str = "/aiserver.v1.DashboardService/GetPlanInfo";
+const SAND_PATH: &str = "/aiserver.v1.DashboardService/GetSandUsageStatus";
 
 #[derive(Debug, Error)]
 pub enum UsageError {
@@ -25,6 +26,15 @@ pub struct TrackUsage {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct GrokBotUsage {
+    pub visible: bool,
+    pub track: TrackUsage,
+    /// RFC3339 UTC, e.g. `2026-09-29T02:28:43.562Z`
+    pub next_reset_at: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UsageSnapshot {
     pub state: String,
     pub plan_name: Option<String>,
@@ -32,6 +42,7 @@ pub struct UsageSnapshot {
     pub billing_cycle_end_ms: Option<i64>,
     pub cursor: TrackUsage,
     pub other: TrackUsage,
+    pub grok: GrokBotUsage,
     pub error: Option<String>,
 }
 
@@ -71,6 +82,20 @@ struct PlanInfo {
     billing_cycle_end: Option<String>,
 }
 
+#[derive(Debug, Deserialize)]
+struct SandUsageResponse {
+    #[serde(rename = "usagePercent")]
+    usage_percent: Option<f64>,
+    #[serde(rename = "nextResetTimestampUtc")]
+    next_reset_timestamp_utc: Option<String>,
+    #[serde(rename = "hasNonZeroIncludedLimit")]
+    has_non_zero_included_limit: Option<bool>,
+    #[serde(rename = "hasAvailableUsage")]
+    has_available_usage: Option<bool>,
+    #[serde(rename = "grokPlanLabel")]
+    grok_plan_label: Option<String>,
+}
+
 fn parse_ms_timestamp(raw: &str) -> Option<i64> {
     raw.parse::<i64>().ok()
 }
@@ -106,9 +131,48 @@ fn track(label: &str, source: &str, percent: Option<f64>, message: Option<String
     }
 }
 
+fn empty_grok() -> GrokBotUsage {
+    GrokBotUsage {
+        visible: false,
+        track: track("Grok Bot", "sand.usagePercent", None, None),
+        next_reset_at: None,
+    }
+}
+
+fn parse_grok(sand_val: Option<serde_json::Value>) -> GrokBotUsage {
+    let Some(sand_val) = sand_val else {
+        return empty_grok();
+    };
+    let sand: SandUsageResponse = match serde_json::from_value(sand_val) {
+        Ok(s) => s,
+        Err(_) => return empty_grok(),
+    };
+
+    let visible = sand.has_non_zero_included_limit.unwrap_or(false)
+        || sand.has_available_usage.unwrap_or(false);
+    let label = sand
+        .grok_plan_label
+        .filter(|s| !s.trim().is_empty())
+        .map(|s| {
+            if s.eq_ignore_ascii_case("Grok Bot Plan") {
+                "Grok Bot".into()
+            } else {
+                s
+            }
+        })
+        .unwrap_or_else(|| "Grok Bot".into());
+
+    GrokBotUsage {
+        visible,
+        track: track(&label, "sand.usagePercent", sand.usage_percent, None),
+        next_reset_at: sand.next_reset_timestamp_utc,
+    }
+}
+
 pub fn fetch_usage(token: &str) -> Result<UsageSnapshot, UsageError> {
     let usage_val = post_json(USAGE_PATH, token)?;
     let plan_val = post_json(PLAN_PATH, token).unwrap_or(serde_json::json!({}));
+    let sand_val = post_json(SAND_PATH, token).ok();
 
     let usage: UsageResponse =
         serde_json::from_value(usage_val).map_err(|e| UsageError::Parse(e.to_string()))?;
@@ -154,6 +218,7 @@ pub fn fetch_usage(token: &str) -> Result<UsageSnapshot, UsageError> {
             plan_usage.api_percent_used,
             usage.named_msg,
         ),
+        grok: parse_grok(sand_val),
         error: None,
     })
 }
@@ -166,6 +231,7 @@ pub fn need_login(message: String) -> UsageSnapshot {
         billing_cycle_end_ms: None,
         cursor: track("Cursor", "planUsage.autoPercentUsed", None, None),
         other: track("Other", "planUsage.apiPercentUsed", None, None),
+        grok: empty_grok(),
         error: Some(message),
     }
 }
@@ -178,6 +244,7 @@ pub fn fetch_error(message: String) -> UsageSnapshot {
         billing_cycle_end_ms: None,
         cursor: track("Cursor", "planUsage.autoPercentUsed", None, None),
         other: track("Other", "planUsage.apiPercentUsed", None, None),
+        grok: empty_grok(),
         error: Some(message),
     }
 }

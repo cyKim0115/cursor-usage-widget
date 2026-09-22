@@ -8,6 +8,12 @@ type TrackUsage = {
   sourceField: string;
 };
 
+type GrokBotUsage = {
+  visible: boolean;
+  track: TrackUsage;
+  nextResetAt: string | null;
+};
+
 type UsageSnapshot = {
   state: string;
   planName: string | null;
@@ -15,7 +21,22 @@ type UsageSnapshot = {
   billingCycleEndMs: number | null;
   cursor: TrackUsage;
   other: TrackUsage;
+  grok: GrokBotUsage;
   error: string | null;
+};
+
+const EMPTY_TRACK = (label: string): TrackUsage => ({
+  label,
+  percentUsed: null,
+  remainingPercent: null,
+  displayMessage: null,
+  sourceField: "",
+});
+
+const EMPTY_GROK: GrokBotUsage = {
+  visible: false,
+  track: EMPTY_TRACK("Grok Bot"),
+  nextResetAt: null,
 };
 
 type ContextMenuState = {
@@ -91,14 +112,10 @@ function showContextMenu(state: ContextMenuState) {
 function shortCaption(track: TrackUsage): string {
   if (track.percentUsed == null) return "—";
   const used = Math.round(track.percentUsed);
-  if (track.displayMessage) {
-    return `${used}% used`;
-  }
   return `${used}% used`;
 }
 
-function formatRenewalRemaining(endMs: number | null): string {
-  if (endMs == null) return "";
+function formatRemaining(endMs: number): string {
   const diff = endMs - Date.now();
   if (diff <= 0) return "0 days left";
 
@@ -114,6 +131,19 @@ function formatRenewalRemaining(endMs: number | null): string {
 
   const minutes = Math.max(1, Math.floor(diff / minuteMs));
   return minutes === 1 ? "1 minute left" : `${minutes} minutes left`;
+}
+
+function formatRenewalRemaining(endMs: number | null): string {
+  if (endMs == null) return "";
+  return formatRemaining(endMs);
+}
+
+function grokCaption(grok: GrokBotUsage): string {
+  const used = shortCaption(grok.track);
+  if (!grok.nextResetAt) return used;
+  const endMs = Date.parse(grok.nextResetAt);
+  if (Number.isNaN(endMs)) return used;
+  return `${used} · reset ${formatRemaining(endMs)}`;
 }
 
 function setFill(el: HTMLElement, percent: number | null) {
@@ -142,6 +172,15 @@ function render(snap: UsageSnapshot) {
   setFill($("cursor-fill"), snap.cursor.percentUsed);
   setFill($("other-fill"), snap.other.percentUsed);
 
+  const grokTrack = $("track-grok");
+  const grok = snap.grok ?? EMPTY_GROK;
+  grokTrack.classList.toggle("hidden", !grok.visible);
+  if (grok.visible) {
+    $("grok-label").textContent = grok.track.label || "Grok Bot";
+    $("grok-caption").textContent = grokCaption(grok);
+    setFill($("grok-fill"), grok.track.percentUsed);
+  }
+
   const status = $("status");
   const renewal = $("renewal");
   const now = new Date();
@@ -166,20 +205,9 @@ async function refresh() {
       planName: null,
       includedUsd: null,
       billingCycleEndMs: null,
-      cursor: {
-        label: "Cursor",
-        percentUsed: null,
-        remainingPercent: null,
-        displayMessage: null,
-        sourceField: "",
-      },
-      other: {
-        label: "Other",
-        percentUsed: null,
-        remainingPercent: null,
-        displayMessage: null,
-        sourceField: "",
-      },
+      cursor: EMPTY_TRACK("Cursor"),
+      other: EMPTY_TRACK("Other"),
+      grok: EMPTY_GROK,
       error: String(e),
     });
   }
