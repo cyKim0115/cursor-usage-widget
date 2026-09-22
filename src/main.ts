@@ -1,83 +1,26 @@
 import { invoke } from "@tauri-apps/api/core";
-
-type TrackUsage = {
-  label: string;
-  percentUsed: number | null;
-  remainingPercent: number | null;
-  displayMessage: string | null;
-  sourceField: string;
-};
-
-type GrokBotUsage = {
-  visible: boolean;
-  track: TrackUsage;
-  nextResetAt: string | null;
-};
-
-type UsageSnapshot = {
-  state: string;
-  planName: string | null;
-  includedUsd: number | null;
-  billingCycleEndMs: number | null;
-  cursor: TrackUsage;
-  other: TrackUsage;
-  grok: GrokBotUsage;
-  error: string | null;
-};
-
-const EMPTY_TRACK = (label: string): TrackUsage => ({
-  label,
-  percentUsed: null,
-  remainingPercent: null,
-  displayMessage: null,
-  sourceField: "",
-});
-
-const EMPTY_GROK: GrokBotUsage = {
-  visible: false,
-  track: EMPTY_TRACK("Grok Bot"),
-  nextResetAt: null,
-};
+import { listen } from "@tauri-apps/api/event";
+import { applyAlwaysOnTop, loadAlwaysOnTop } from "./preferences";
+import {
+  EMPTY_GROK,
+  fetchErrorSnapshot,
+  formatRenewalRemaining,
+  grokCaption,
+  planLine,
+  shortCaption,
+  type GrokBotUsage,
+  type UsageSnapshot,
+} from "./usage-types";
 
 type ContextMenuState = {
   x: number;
   y: number;
-  autostartEnabled: boolean;
-  isDevBuild: boolean;
 };
-
-const ALWAYS_ON_TOP_KEY = "cursor-usage-always-on-top";
-
-/** The widget shipped always-on-top, so an unset key must stay on. */
-function loadAlwaysOnTop(): boolean {
-  return localStorage.getItem(ALWAYS_ON_TOP_KEY) !== "false";
-}
-
-async function setAlwaysOnTop(enabled: boolean) {
-  localStorage.setItem(ALWAYS_ON_TOP_KEY, enabled ? "true" : "false");
-  await invoke("set_always_on_top", { enabled });
-}
 
 function $(id: string): HTMLElement {
   const el = document.getElementById(id);
   if (!el) throw new Error(`missing #${id}`);
   return el;
-}
-
-async function getAutostartEnabled(): Promise<boolean> {
-  try {
-    return await invoke<boolean>("is_autostart_enabled");
-  } catch {
-    return false;
-  }
-}
-
-async function getIsDevBuild(): Promise<boolean> {
-  try {
-    return await invoke<boolean>("is_dev_build");
-  } catch {
-    return false;
-  }
 }
 
 function hideContextMenu() {
@@ -88,18 +31,9 @@ function hideContextMenu() {
 function showContextMenu(state: ContextMenuState) {
   const backdrop = $("context-backdrop");
   const menu = $("context-menu");
-  const menuAutostart = $("menu-autostart");
 
   backdrop.classList.remove("hidden");
   menu.classList.remove("hidden");
-
-  if (state.isDevBuild) {
-    menuAutostart.textContent = "시작프로그램 (시작.bat 사용)";
-  } else {
-    menuAutostart.textContent = `${state.autostartEnabled ? "✓ " : ""}시작프로그램`;
-  }
-
-  $("menu-always-on-top").textContent = `${loadAlwaysOnTop() ? "✓ " : ""}항상 위에 표시`;
 
   const menuRect = menu.getBoundingClientRect();
   const maxX = Math.max(8, window.innerWidth - menuRect.width - 8);
@@ -107,43 +41,6 @@ function showContextMenu(state: ContextMenuState) {
 
   menu.style.left = `${Math.min(state.x, maxX)}px`;
   menu.style.top = `${Math.min(state.y, maxY)}px`;
-}
-
-function shortCaption(track: TrackUsage): string {
-  if (track.percentUsed == null) return "—";
-  const used = Math.round(track.percentUsed);
-  return `${used}% used`;
-}
-
-function formatRemaining(endMs: number): string {
-  const diff = endMs - Date.now();
-  if (diff <= 0) return "0 days left";
-
-  const dayMs = 24 * 60 * 60 * 1000;
-  const hourMs = 60 * 60 * 1000;
-  const minuteMs = 60 * 1000;
-
-  const days = Math.floor(diff / dayMs);
-  if (days >= 1) return days === 1 ? "1 day left" : `${days} days left`;
-
-  const hours = Math.floor(diff / hourMs);
-  if (hours >= 1) return hours === 1 ? "1 hour left" : `${hours} hours left`;
-
-  const minutes = Math.max(1, Math.floor(diff / minuteMs));
-  return minutes === 1 ? "1 minute left" : `${minutes} minutes left`;
-}
-
-function formatRenewalRemaining(endMs: number | null): string {
-  if (endMs == null) return "";
-  return formatRemaining(endMs);
-}
-
-function grokCaption(grok: GrokBotUsage): string {
-  const used = shortCaption(grok.track);
-  if (!grok.nextResetAt) return used;
-  const endMs = Date.parse(grok.nextResetAt);
-  if (Number.isNaN(endMs)) return used;
-  return `${used} · reset ${formatRemaining(endMs)}`;
 }
 
 function setFill(el: HTMLElement, percent: number | null) {
@@ -158,14 +55,7 @@ function render(snap: UsageSnapshot) {
   const widget = document.querySelector(".widget") as HTMLElement;
   widget.classList.toggle("error", snap.state !== "OK");
 
-  const plan = $("plan");
-  if (snap.planName && snap.includedUsd != null) {
-    plan.textContent = `${snap.planName} · $${snap.includedUsd.toFixed(0)} incl.`;
-  } else if (snap.planName) {
-    plan.textContent = snap.planName;
-  } else {
-    plan.textContent = "";
-  }
+  $("plan").textContent = planLine(snap);
 
   $("cursor-caption").textContent = shortCaption(snap.cursor);
   $("other-caption").textContent = shortCaption(snap.other);
@@ -173,7 +63,7 @@ function render(snap: UsageSnapshot) {
   setFill($("other-fill"), snap.other.percentUsed);
 
   const grokTrack = $("track-grok");
-  const grok = snap.grok ?? EMPTY_GROK;
+  const grok: GrokBotUsage = snap.grok ?? EMPTY_GROK;
   grokTrack.classList.toggle("hidden", !grok.visible);
   if (grok.visible) {
     $("grok-label").textContent = grok.track.label || "Grok Bot";
@@ -190,7 +80,7 @@ function render(snap: UsageSnapshot) {
   } else if (snap.state === "NeedLogin") {
     status.textContent = "Cursor 로그인 필요";
   } else {
-    status.textContent = snap.error ? `갱신 실패 · ${hhmm}` : `갱신 실패 · ${hhmm}`;
+    status.textContent = `갱신 실패 · ${hhmm}`;
   }
   renewal.textContent = formatRenewalRemaining(snap.billingCycleEndMs);
 }
@@ -200,42 +90,35 @@ async function refresh() {
     const snap = await invoke<UsageSnapshot>("get_usage");
     render(snap);
   } catch (e) {
-    render({
-      state: "FetchError",
-      planName: null,
-      includedUsd: null,
-      billingCycleEndMs: null,
-      cursor: EMPTY_TRACK("Cursor"),
-      other: EMPTY_TRACK("Other"),
-      grok: EMPTY_GROK,
-      error: String(e),
-    });
+    render(fetchErrorSnapshot(String(e)));
+  }
+}
+
+async function openSettings() {
+  hideContextMenu();
+  try {
+    await invoke("open_settings_window");
+  } catch (e) {
+    window.alert(String(e));
   }
 }
 
 async function boot() {
   const backdrop = $("context-backdrop");
-  const menuAutostart = $("menu-autostart") as HTMLButtonElement;
-  const menuAlwaysOnTop = $("menu-always-on-top") as HTMLButtonElement;
-  const menuRefresh = $("menu-refresh") as HTMLButtonElement;
+  const menuSettings = $("menu-settings") as HTMLButtonElement;
   const menuQuit = $("menu-quit") as HTMLButtonElement;
 
   // tauri.conf.json pins the window to always-on-top, so a user who turned it
   // off gets it restored as soon as the webview boots.
   try {
-    await invoke("set_always_on_top", { enabled: loadAlwaysOnTop() });
+    await applyAlwaysOnTop(loadAlwaysOnTop());
   } catch {
     /* browser preview */
   }
 
-  window.addEventListener("contextmenu", async (event) => {
+  window.addEventListener("contextmenu", (event) => {
     event.preventDefault();
-    showContextMenu({
-      x: event.clientX,
-      y: event.clientY,
-      autostartEnabled: await getAutostartEnabled(),
-      isDevBuild: await getIsDevBuild(),
-    });
+    showContextMenu({ x: event.clientX, y: event.clientY });
   });
 
   backdrop.addEventListener("pointerdown", (event) => {
@@ -262,64 +145,20 @@ async function boot() {
     if (event.key === "Escape") hideContextMenu();
   });
 
-  menuAutostart.addEventListener("click", async (event) => {
+  menuSettings.addEventListener("click", (event) => {
     event.stopPropagation();
-    menuAutostart.disabled = true;
-    try {
-      const isDev = await getIsDevBuild();
-      if (isDev) {
-        window.alert(
-          "개발 모드에서는 시작프로그램을 바꿀 수 없습니다.\n\n「시작.bat」으로 설치·실행한 뒤, 위젯에서 다시 우클릭 → 시작프로그램을 켜 주세요.",
-        );
-        return;
-      }
-      const enabled = await getAutostartEnabled();
-      if (enabled) {
-        await invoke("disable_autostart");
-      } else {
-        await invoke("enable_autostart");
-      }
-    } catch (e) {
-      window.alert(String(e));
-    } finally {
-      menuAutostart.disabled = false;
-      showContextMenu({
-        x: parseFloat($("context-menu").style.left || "0"),
-        y: parseFloat($("context-menu").style.top || "0"),
-        autostartEnabled: await getAutostartEnabled(),
-        isDevBuild: await getIsDevBuild(),
-      });
-    }
-  });
-
-  menuAlwaysOnTop.addEventListener("click", async (event) => {
-    event.stopPropagation();
-    menuAlwaysOnTop.disabled = true;
-    try {
-      await setAlwaysOnTop(!loadAlwaysOnTop());
-    } catch (e) {
-      window.alert(String(e));
-    } finally {
-      menuAlwaysOnTop.disabled = false;
-      showContextMenu({
-        x: parseFloat($("context-menu").style.left || "0"),
-        y: parseFloat($("context-menu").style.top || "0"),
-        autostartEnabled: await getAutostartEnabled(),
-        isDevBuild: await getIsDevBuild(),
-      });
-    }
-  });
-
-  menuRefresh.addEventListener("click", async (event) => {
-    event.stopPropagation();
-    hideContextMenu();
-    await refresh();
+    void openSettings();
   });
 
   menuQuit.addEventListener("click", async (event) => {
     event.stopPropagation();
     hideContextMenu();
     await invoke("quit_app");
+  });
+
+  // 설정 창이 방금 받아온 스냅샷을 넘겨주면 API를 다시 치지 않고 그대로 그린다.
+  await listen<UsageSnapshot>("usage-updated", (event) => {
+    render(event.payload);
   });
 
   await refresh();

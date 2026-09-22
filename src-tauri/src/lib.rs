@@ -9,13 +9,14 @@ use install::{
 };
 use std::sync::mpsc;
 use std::time::Duration;
-use tauri::{Manager, WindowEvent};
+use tauri::{Emitter, Manager, WindowEvent};
 use tauri_plugin_window_state::{AppHandleExt, StateFlags};
 use usage::{fetch_error, fetch_usage, need_login, UsageSnapshot};
 
 const POLL_INTERVAL_MS: u64 = 300_000;
 /// 드래그가 멎은 뒤 위치를 디스크에 쓰기까지 기다리는 시간.
 const POSITION_FLUSH_DEBOUNCE_MS: u64 = 400;
+const SETTINGS_LABEL: &str = "settings";
 
 #[tauri::command]
 fn get_usage() -> UsageSnapshot {
@@ -37,6 +38,28 @@ fn get_poll_interval_ms() -> u64 {
 #[tauri::command]
 fn quit_app(app: tauri::AppHandle) {
     app.exit(0);
+}
+
+/// 설정 창은 tauri.conf.json 이 숨긴 채로 미리 만들어 두므로, 여는 쪽은 보여
+/// 주기만 하면 된다. 창은 리로드되지 않으니 열릴 때마다 최신화 신호를 보낸다.
+#[tauri::command]
+fn open_settings_window(app: tauri::AppHandle) -> Result<(), String> {
+    let window = app
+        .get_webview_window(SETTINGS_LABEL)
+        .ok_or_else(|| "settings window not found".to_string())?;
+    window.show().map_err(|e| e.to_string())?;
+    window.unminimize().map_err(|e| e.to_string())?;
+    window.set_focus().map_err(|e| e.to_string())?;
+    window.emit("settings-open", ()).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+fn close_settings_window(app: tauri::AppHandle) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window(SETTINGS_LABEL) {
+        window.hide().map_err(|e| e.to_string())?;
+    }
+    Ok(())
 }
 
 /// The preference lives in the webview, so the menu and startup both push it
@@ -107,15 +130,19 @@ pub fn run() {
     tauri::Builder::default()
         // 위치만 복원합니다. 창 크기는 tauri.conf.json 이 정하므로, 크기까지
         // 저장하면 지난 실행의 크기가 갱신된 레이아웃 높이를 덮어씁니다.
+        // 설정 창은 tauri.conf.json 의 center 동작을 그대로 두려고 제외합니다.
         .plugin(
             tauri_plugin_window_state::Builder::default()
                 .with_state_flags(StateFlags::POSITION)
+                .with_denylist(&[SETTINGS_LABEL])
                 .build(),
         )
         .invoke_handler(tauri::generate_handler![
             get_usage,
             get_poll_interval_ms,
             quit_app,
+            open_settings_window,
+            close_settings_window,
             is_dev_build,
             enable_autostart,
             disable_autostart,
@@ -129,6 +156,17 @@ pub fn run() {
             // Release builds keep a stable copy under LOCALAPPDATA for shortcuts/autostart.
             let _ = ensure_installed_release();
             Ok(())
+        })
+        // 설정 창의 X 는 닫기가 아니라 숨기기다. 실제로 닫아 버리면 다음에 열
+        // 때 창을 찾지 못한다.
+        .on_window_event(|window, event| {
+            if window.label() != SETTINGS_LABEL {
+                return;
+            }
+            if let WindowEvent::CloseRequested { api, .. } = event {
+                api.prevent_close();
+                let _ = window.hide();
+            }
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
