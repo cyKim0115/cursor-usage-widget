@@ -490,8 +490,13 @@ html.glass .glass-backdrop {
   flex-direction: column;
 }
 
-.settings-footer--window {
-  padding-top: 4px;
+/* 저장 버튼이 없다는 안내 한 줄(Frond 설정 팝업 아래 줄과 같은 문구). 닫기는 머리 줄의 X·Esc. */
+.settings-note {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--muted);
+  text-align: center;
 }
 
 .btn {

@@ -240,9 +240,6 @@ async function onRefresh() {
 }
 
 function bindUi() {
-  $("btn-close").addEventListener("click", () => {
-    void closeWindow();
-  });
   $("btn-refresh").addEventListener("click", () => {
     void onRefresh();
   });
